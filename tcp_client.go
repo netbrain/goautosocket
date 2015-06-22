@@ -5,24 +5,31 @@
 
 package gas
 
-import "net"
+import (
+	"net"
+	"sync"
+)
 
 // ----------------------------------------------------------------------------
 
 // TCPClient provides a TCP connection with auto-reconnect capabilities.
 //
 // It embeds a *net.TCPConn and thus implements the net.Conn interface.
+//
+// TCPClient can be safely used from multiple goroutines.
 type TCPClient struct {
 	*net.TCPConn
+
+	lock sync.RWMutex
 }
 
-// Dial returns a new *TCPClient.
+// Dial returns a new net.Conn.
 //
 // The new client connects to the remote address `raddr` on the network `network`,
 // which must be "tcp", "tcp4", or "tcp6".
 //
 // This complements net package's Dial function.
-func Dial(network, addr string) (*TCPClient, error) {
+func Dial(network, addr string) (net.Conn, error) {
 	raddr, err := net.ResolveTCPAddr(network, addr)
 	if err != nil {
 		return nil, err
@@ -44,5 +51,24 @@ func DialTCP(network string, laddr, raddr *net.TCPAddr) (*TCPClient, error) {
 		return nil, err
 	}
 
-	return &TCPClient{conn}, nil
+	return &TCPClient{TCPConn: conn, lock: sync.RWMutex{}}, nil
+}
+
+// ----------------------------------------------------------------------------
+
+// reconnect builds a new TCP connection to replace the embedded *net.TCPConn
+//
+// TODO: keep old socket configuration (timeout, linger...)
+func (c *TCPClient) reconnect() error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	laddr, raddr := c.TCPConn.LocalAddr(), c.TCPConn.RemoteAddr()
+	conn, err := net.DialTCP(raddr.Network(), laddr.(*net.TCPAddr), raddr.(*net.TCPAddr))
+	if err != nil {
+		return err
+	}
+
+	c.TCPConn = conn
+	return nil
 }
