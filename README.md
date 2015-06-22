@@ -1,6 +1,8 @@
 # GoAutoSocket
 
-Simple library that provides TCP clients with auto-reconnect capabilities
+Simple library that provides TCP clients with auto-reconnect capabilities.
+
+This can be safely used from multiple goroutines.
 
 ## Install
 
