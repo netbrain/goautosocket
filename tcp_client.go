@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -111,7 +112,7 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	t := time.Millisecond * 100
 
 	for i := 0; i < maxTries; i++ {
-		n, err := c.TCPConn.Read(b)
+		n, err := c.TCPConn.ReadFrom(r)
 		if err == nil {
 			return n, err
 		} else if err.Error() == "EOF" {
@@ -120,6 +121,38 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 			}
 		} else {
 			return n, err
+		}
+		t *= 2
+	}
+
+	return -1, nil // ERR_MAX_TRIES
+}
+
+// Write wraps net.TCPConn's Read method with reconnect capabilities
+func (c *TCPClient) Write(b []byte) (int, error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	maxTries := 30
+	t := time.Millisecond * 100
+
+	for i := 0; i < maxTries; i++ {
+		n, err := c.TCPConn.Write(b)
+		if err == nil {
+			return n, err
+		} else {
+			switch e := err.(type) {
+			case *net.OpError:
+				if e.Err.(syscall.Errno) == 0x20 {
+					if c.reconnect() != nil {
+						time.Sleep(t)
+					}
+				} else {
+					return n, err
+				}
+			default:
+				return n, err
+			}
 		}
 		t *= 2
 	}
