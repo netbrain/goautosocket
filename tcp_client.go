@@ -6,6 +6,7 @@
 package gas
 
 import (
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -78,6 +79,31 @@ func (c *TCPClient) reconnect() error {
 
 // Read wraps net.TCPConn's Read method with reconnect capabilities
 func (c *TCPClient) Read(b []byte) (int, error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	maxTries := 30
+	t := time.Millisecond * 100
+
+	for i := 0; i < maxTries; i++ {
+		n, err := c.TCPConn.Read(b)
+		if err == nil {
+			return n, err
+		} else if err.Error() == "EOF" {
+			if c.reconnect() != nil {
+				time.Sleep(t)
+			}
+		} else {
+			return n, err
+		}
+		t *= 2
+	}
+
+	return -1, nil // ERR_MAX_TRIES
+}
+
+// ReadFrom wraps net.TCPConn's Read method with reconnect capabilities
+func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
