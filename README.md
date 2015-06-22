@@ -1,4 +1,4 @@
-# GoAutoSocket
+# GAS: Go Auto Socket
 
 Simple library that provides TCP clients with auto-reconnect capabilities.
 
