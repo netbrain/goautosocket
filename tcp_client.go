@@ -151,10 +151,8 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	maxTries := 5
-	t := time.Millisecond * 100
-
-	for i := 0; i < maxTries; i++ {
+	t := c.retryInterval
+	for i := 0; i < c.maxRetries; i++ {
 		n, err := c.TCPConn.Read(b)
 		if err == nil {
 			return n, err
@@ -193,10 +191,8 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	maxTries := 5
-	t := time.Millisecond * 100
-
-	for i := 0; i < maxTries; i++ {
+	t := c.retryInterval
+	for i := 0; i < c.maxRetries; i++ {
 		n, err := c.TCPConn.ReadFrom(r)
 		if err == nil {
 			return n, err
@@ -235,10 +231,8 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	maxTries := 5
-	t := time.Millisecond * 100
-
-	for i := 0; i < maxTries; i++ {
+	t := c.retryInterval
+	for i := 0; i < c.maxRetries; i++ {
 		n, err := c.TCPConn.Write(b)
 		if err == nil {
 			return n, err
