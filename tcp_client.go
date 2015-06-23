@@ -59,9 +59,9 @@ func DialTCP(network string, laddr, raddr *net.TCPAddr) (*TCPClient, error) {
 
 // ----------------------------------------------------------------------------
 
-// reconnect builds a new TCP connection to replace the embedded *net.TCPConn
+// reconnect builds a new TCP connection to replace the embedded *net.TCPConn.
 //
-// TODO: keep old socket configuration (timeout, linger...)
+// TODO: keep old socket configuration (timeout, linger...).
 func (c *TCPClient) reconnect() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -78,7 +78,7 @@ func (c *TCPClient) reconnect() error {
 
 // ----------------------------------------------------------------------------
 
-// Read wraps net.TCPConn's Read method with reconnect capabilities
+// Read wraps net.TCPConn's Read method with reconnect capabilities.
 func (c *TCPClient) Read(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -100,10 +100,10 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 		t *= 2
 	}
 
-	return -1, nil // ERR_MAX_TRIES
+	return -1, ErrMaxRetries
 }
 
-// ReadFrom wraps net.TCPConn's Read method with reconnect capabilities
+// ReadFrom wraps net.TCPConn's Read method with reconnect capabilities.
 func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -125,10 +125,10 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 		t *= 2
 	}
 
-	return -1, nil // ERR_MAX_TRIES
+	return -1, ErrMaxRetries
 }
 
-// Write wraps net.TCPConn's Read method with reconnect capabilities
+// Write wraps net.TCPConn's Read method with reconnect capabilities.
 func (c *TCPClient) Write(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -157,5 +157,5 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 		t *= 2
 	}
 
-	return -1, nil // ERR_MAX_TRIES
+	return -1, ErrMaxRetries
 }
