@@ -64,6 +64,9 @@ func DialTCP(network string, laddr, raddr *net.TCPAddr) (*TCPClient, error) {
 
 // SetMaxRetries sets the retry limit for the TCPClient.
 //
+// Assuming i is the current retry iteration, the total sleep time is
+// t = retryInterval * (2^i)
+//
 // This function completely Lock()s the TCPClient.
 func (c *TCPClient) SetMaxRetries(maxRetries int) {
 	c.lock.Lock()
@@ -73,11 +76,38 @@ func (c *TCPClient) SetMaxRetries(maxRetries int) {
 }
 
 // GetMaxRetries gets the retry limit for the TCPClient.
+//
+// Assuming i is the current retry iteration, the total sleep time is
+// t = retryInterval * (2^i)
 func (c *TCPClient) GetMaxRetries(maxRetries int) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	return c.maxRetries
+}
+
+// SetRetryInterval sets the retry interval for the TCPClient.
+//
+// Assuming i is the current retry iteration, the total sleep time is
+// t = retryInterval * (2^i)
+//
+// This function completely Lock()s the TCPClient.
+func (c *TCPClient) SetRetryInterval(retryInterval time.Duration) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.retryInterval = retryInterval
+}
+
+// GetRetryInterval gets the retry interval for the TCPClient.
+//
+// Assuming i is the current retry iteration, the total sleep time is
+// t = retryInterval * (2^i)
+func (c *TCPClient) GetRetryInterval(retryInterval time.Duration) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	return c.retryInterval
 }
 
 // ----------------------------------------------------------------------------
