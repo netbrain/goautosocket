@@ -94,8 +94,8 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 		} else {
 			switch e := err.(type) {
 			case *net.OpError:
-				if e.Err.(syscall.Errno) == 0x20 ||
-					e.Err.(syscall.Errno) == 0x68 {
+				if e.Err.(syscall.Errno) == syscall.EPIPE ||
+					e.Err.(syscall.Errno) == syscall.ECONNRESET {
 					c.lock.RUnlock()
 					if c.reconnect() != nil {
 						time.Sleep(t)
@@ -135,8 +135,8 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 		} else {
 			switch e := err.(type) {
 			case *net.OpError:
-				if e.Err.(syscall.Errno) == 0x20 ||
-					e.Err.(syscall.Errno) == 0x68 {
+				if e.Err.(syscall.Errno) == syscall.EPIPE ||
+					e.Err.(syscall.Errno) == syscall.ECONNRESET {
 					c.lock.RUnlock()
 					if c.reconnect() != nil {
 						time.Sleep(t)
@@ -176,8 +176,8 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 		} else {
 			switch e := err.(type) {
 			case *net.OpError:
-				if e.Err.(syscall.Errno) == 0x20 ||
-					e.Err.(syscall.Errno) == 0x68 {
+				if e.Err.(syscall.Errno) == syscall.EPIPE ||
+					e.Err.(syscall.Errno) == syscall.ECONNRESET {
 					c.lock.RUnlock()
 					if c.reconnect() != nil {
 						time.Sleep(t)
