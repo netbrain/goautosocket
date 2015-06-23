@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 )
@@ -33,6 +34,7 @@ func TestMain(m *testing.M) {
 		log.Println(err)
 		os.Exit(666)
 	}
+	defer server.Close()
 
 	os.Exit(m.Run())
 }
@@ -88,4 +90,96 @@ func TestTCPClient_reconnect(t *testing.T) {
 	if err := tcpConn2.Close(); err != nil {
 		t.Error(err)
 	}
+}
+
+// ----------------------------------------------------------------------------
+
+func TestTCPClient_core(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipped (short mode)")
+	}
+
+	// open a server socket
+	s, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Error(err)
+	}
+	// save the original port
+	addr := s.Addr()
+
+	nbClients := 10
+	// connect nbClients clients to the server
+	clients := make([]net.Conn, nbClients)
+	for i := 0; i < len(clients); i++ {
+		c, err := Dial("tcp", s.Addr().String())
+		if err != nil {
+			t.Error(err)
+		}
+		defer c.Close()
+		clients[i] = c
+	}
+
+	// shut down and boot up the server randomly
+	var swg sync.WaitGroup
+	swg.Add(1)
+	go func() {
+		defer swg.Done()
+		for i := 0; i < 10; i++ {
+			log.Println("server up")
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			if err := s.Close(); err != nil {
+				t.Error(err)
+			}
+			log.Println("server down")
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			s, err = net.Listen("tcp", addr.String())
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	}()
+
+	// clients concurrently read and write to the server
+	var cwg sync.WaitGroup
+	for i, c := range clients {
+		cwg.Add(1)
+		go func(ii int, cc net.Conn) {
+			str := []byte("hello, world!")
+			b := make([]byte, len(str))
+			defer cwg.Done()
+			for {
+				if _, err := cc.Write(str); err != nil {
+					switch e := err.(type) {
+					case Error:
+						if e == ErrMaxRetries {
+							log.Println("client", ii, "leaving, reached retry limit while writing")
+							return
+						}
+					default:
+						t.Error(err)
+					}
+				}
+				if _, err := cc.Read(b); err != nil {
+					switch e := err.(type) {
+					case Error:
+						if e == ErrMaxRetries {
+							log.Println("client", ii, "leaving, reached retry limit while reading")
+							return
+						}
+					default:
+						t.Error(err)
+					}
+				}
+			}
+		}(i, c)
+	}
+
+	// terminates the server indefinitely
+	swg.Wait()
+	if err := s.Close(); err != nil {
+		t.Error(err)
+	}
+
+	// wait for clients to give up
+	cwg.Wait()
 }
