@@ -207,14 +207,14 @@ func ExampleTCPClient() {
 	swg.Add(1)
 	go func() {
 		defer swg.Done()
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 5; i++ {
 			log.Println("server up")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
 			if err := s.Close(); err != nil {
 				log.Fatal(err)
 			}
 			log.Println("server down")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
 			s, err = net.Listen("tcp", addr.String())
 			if err != nil {
 				log.Fatal(err)
