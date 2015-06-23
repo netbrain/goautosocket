@@ -91,27 +91,26 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 		n, err := c.TCPConn.Read(b)
 		if err == nil {
 			return n, err
-		} else {
-			switch e := err.(type) {
-			case *net.OpError:
-				if e.Err.(syscall.Errno) == syscall.EPIPE ||
-					e.Err.(syscall.Errno) == syscall.ECONNRESET {
-					c.lock.RUnlock()
-					if c.reconnect() != nil {
-						time.Sleep(t)
-					}
-					c.lock.RLock()
+		}
+		switch e := err.(type) {
+		case *net.OpError:
+			if e.Err.(syscall.Errno) == syscall.EPIPE ||
+				e.Err.(syscall.Errno) == syscall.ECONNRESET {
+				c.lock.RUnlock()
+				if c.reconnect() != nil {
+					time.Sleep(t)
 				}
-			default:
-				if err.Error() == "EOF" {
-					c.lock.RUnlock()
-					if c.reconnect() != nil {
-						time.Sleep(t)
-					}
-					c.lock.RLock()
-				} else {
-					return n, err
+				c.lock.RLock()
+			}
+		default:
+			if err.Error() == "EOF" {
+				c.lock.RUnlock()
+				if c.reconnect() != nil {
+					time.Sleep(t)
 				}
+				c.lock.RLock()
+			} else {
+				return n, err
 			}
 		}
 		t *= 2
@@ -132,27 +131,26 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 		n, err := c.TCPConn.ReadFrom(r)
 		if err == nil {
 			return n, err
-		} else {
-			switch e := err.(type) {
-			case *net.OpError:
-				if e.Err.(syscall.Errno) == syscall.EPIPE ||
-					e.Err.(syscall.Errno) == syscall.ECONNRESET {
-					c.lock.RUnlock()
-					if c.reconnect() != nil {
-						time.Sleep(t)
-					}
-					c.lock.RLock()
+		}
+		switch e := err.(type) {
+		case *net.OpError:
+			if e.Err.(syscall.Errno) == syscall.EPIPE ||
+				e.Err.(syscall.Errno) == syscall.ECONNRESET {
+				c.lock.RUnlock()
+				if c.reconnect() != nil {
+					time.Sleep(t)
 				}
-			default:
-				if err.Error() == "EOF" {
-					c.lock.RUnlock()
-					if c.reconnect() != nil {
-						time.Sleep(t)
-					}
-					c.lock.RLock()
-				} else {
-					return n, err
+				c.lock.RLock()
+			}
+		default:
+			if err.Error() == "EOF" {
+				c.lock.RUnlock()
+				if c.reconnect() != nil {
+					time.Sleep(t)
 				}
+				c.lock.RLock()
+			} else {
+				return n, err
 			}
 		}
 		t *= 2
@@ -173,22 +171,21 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 		n, err := c.TCPConn.Write(b)
 		if err == nil {
 			return n, err
-		} else {
-			switch e := err.(type) {
-			case *net.OpError:
-				if e.Err.(syscall.Errno) == syscall.EPIPE ||
-					e.Err.(syscall.Errno) == syscall.ECONNRESET {
-					c.lock.RUnlock()
-					if c.reconnect() != nil {
-						time.Sleep(t)
-					}
-					c.lock.RLock()
-				} else {
-					return n, err
+		}
+		switch e := err.(type) {
+		case *net.OpError:
+			if e.Err.(syscall.Errno) == syscall.EPIPE ||
+				e.Err.(syscall.Errno) == syscall.ECONNRESET {
+				c.lock.RUnlock()
+				if c.reconnect() != nil {
+					time.Sleep(t)
 				}
-			default:
+				c.lock.RLock()
+			} else {
 				return n, err
 			}
+		default:
+			return n, err
 		}
 		t *= 2
 	}
