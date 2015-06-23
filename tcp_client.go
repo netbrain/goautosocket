@@ -80,6 +80,8 @@ func (c *TCPClient) reconnect() error {
 // ----------------------------------------------------------------------------
 
 // Read wraps net.TCPConn's Read method with reconnect capabilities.
+//
+// It will return ErrMaxRetries if the retry limit is reached.
 func (c *TCPClient) Read(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -120,6 +122,8 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 }
 
 // ReadFrom wraps net.TCPConn's Read method with reconnect capabilities.
+//
+// It will return ErrMaxRetries if the retry limit is reached.
 func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -160,6 +164,8 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 }
 
 // Write wraps net.TCPConn's Read method with reconnect capabilities.
+//
+// It will return ErrMaxRetries if the retry limit is reached.
 func (c *TCPClient) Write(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
