@@ -1,4 +1,4 @@
-# GoAutoSocket (GAS) [![Build Status](http://img.shields.io/travis/teh-cmc/goautosocket.svg?style=plastic)](https://travis-ci.org/teh-cmc/goautosocket) [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=plastic)](http://godoc.org/github.com/teh-cmc/goautosocket)
+# GoAutoSocket (GAS) ![Status](https://img.shields.io/badge/status-stable-green.svg?style=plastic) [![Build Status](http://img.shields.io/travis/teh-cmc/goautosocket.svg?style=plastic)](https://travis-ci.org/teh-cmc/goautosocket) [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=plastic)](http://godoc.org/github.com/teh-cmc/goautosocket)
 
 The GAS library provides auto-reconnecting TCP sockets in a tiny, fully tested, thread-safe API.
 
@@ -150,7 +150,7 @@ This was built with my needs in mind, no more, no less. That is, I needed a simp
 Surprisingly, I couldn't find such a library (I guess I either didn't look in the right place, or just not hard enough.. oh well); so here it is.
 Do not hesitate to send a pull request if this doesn't cover all your needs (and it probably won't), there are more than welcome.
 
-## License
+## License ![License](https://img.shields.io/badge/license-MIT-blue.svg?)?style=plastic)
 
 The MIT License (MIT) - see LICENSE for more details
 Copyright (c) 2015  Clement 'cmc' Rey  <cr.rey.clement@gmail.com>
