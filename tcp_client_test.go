@@ -36,3 +36,15 @@ func TestMain(m *testing.M) {
 
 	os.Exit(m.Run())
 }
+
+// ----------------------------------------------------------------------------
+
+func TestTCPClient_Dial(t *testing.T) {
+	c, err := Dial("tcp", server.Addr().String())
+	if err != nil {
+		t.Error(err)
+	}
+	if c == nil || c.(*TCPClient).TCPConn == nil {
+		t.Error("initialization failed")
+	}
+}
