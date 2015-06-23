@@ -3,6 +3,7 @@
 The GAS library provides auto-reconnecting TCP sockets in a tiny, fully tested, thread-safe API.
 
 The `TCPClient` struct embeds a `net.TCPConn` and overrides its `Read()` and `Write()` methods, making it entirely compatible with the `net.Conn` interface and the rest of the `net` package.
+This means you should be able to use this library by just replacing `net.Dial` with `gas.Dial` in your code.
 
 ## Install
 
