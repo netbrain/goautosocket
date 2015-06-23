@@ -84,7 +84,7 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	maxTries := 30
+	maxTries := 10
 	t := time.Millisecond * 100
 
 	for i := 0; i < maxTries; i++ {
@@ -92,9 +92,11 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 		if err == nil {
 			return n, err
 		} else if err.Error() == "EOF" {
+			c.lock.RUnlock()
 			if c.reconnect() != nil {
 				time.Sleep(t)
 			}
+			c.lock.RLock()
 		} else {
 			return n, err
 		}
@@ -109,7 +111,7 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	maxTries := 30
+	maxTries := 10
 	t := time.Millisecond * 100
 
 	for i := 0; i < maxTries; i++ {
@@ -117,9 +119,11 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 		if err == nil {
 			return n, err
 		} else if err.Error() == "EOF" {
+			c.lock.RUnlock()
 			if c.reconnect() != nil {
 				time.Sleep(t)
 			}
+			c.lock.RLock()
 		} else {
 			return n, err
 		}
@@ -134,7 +138,7 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	maxTries := 30
+	maxTries := 10
 	t := time.Millisecond * 100
 
 	for i := 0; i < maxTries; i++ {
@@ -144,10 +148,13 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 		} else {
 			switch e := err.(type) {
 			case *net.OpError:
-				if e.Err.(syscall.Errno) == 0x20 {
+				if e.Err.(syscall.Errno) == 0x20 ||
+					e.Err.(syscall.Errno) == 0x68 {
+					c.lock.RUnlock()
 					if c.reconnect() != nil {
 						time.Sleep(t)
 					}
+					c.lock.RLock()
 				} else {
 					return n, err
 				}
