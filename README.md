@@ -22,34 +22,34 @@ and run this code:
 package main
 
 import (
-	"log"
-	"time"
+    "log"
+    "time"
 
-	"github.com/teh-cmc/goautosocket"
+    "github.com/teh-cmc/goautosocket"
 )
 
 func main() {
-	// connect to a TCP server
-	conn, err := gas.Dial("tcp", "localhost:9999")
-	if err != nil {
-		log.Fatal(err)
-	}
+    // connect to a TCP server
+    conn, err := gas.Dial("tcp", "localhost:9999")
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	// client sends "hello, world!" to the server every second
-	for {
-		_, err := conn.Write([]byte("hello, world!"))
-		if err != nil {
-			// if the client reached its retry limit, give up
-			if err == gas.ErrMaxRetries {
-				log.Println("client gave up, reached retry limit")
-				return
-			}
-			// not a GAS error, just panic
-			log.Fatal(err)
-		}
-		log.Println("client says hello!")
-		time.Sleep(time.Second)
-	}
+    // client sends "hello, world!" to the server every second
+    for {
+        _, err := conn.Write([]byte("hello, world!"))
+        if err != nil {
+            // if the client reached its retry limit, give up
+            if err == gas.ErrMaxRetries {
+                log.Println("client gave up, reached retry limit")
+                return
+            }
+            // not a GAS error, just panic
+            log.Fatal(err)
+        }
+        log.Println("client says hello!")
+        time.Sleep(time.Second)
+    }
 }
 ```
 
@@ -63,81 +63,81 @@ An advanced example of a client writing to a buggy server that's randomly crashi
 package main
 
 import (
-	"log"
-	"math/rand"
-	"net"
-	"sync"
-	"time"
+    "log"
+    "math/rand"
+    "net"
+    "sync"
+    "time"
 
-	"github.com/teh-cmc/goautosocket"
+    "github.com/teh-cmc/goautosocket"
 )
 
 func main() {
-	// open a server socket
-	s, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// save the original port
-	addr := s.Addr()
+    // open a server socket
+    s, err := net.Listen("tcp", "localhost:0")
+    if err != nil {
+        log.Fatal(err)
+    }
+    // save the original port
+    addr := s.Addr()
 
-	// connect a client to the server
-	c, err := gas.Dial("tcp", s.Addr().String())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer c.Close()
+    // connect a client to the server
+    c, err := gas.Dial("tcp", s.Addr().String())
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer c.Close()
 
-	// shut down and boot up the server randomly
-	var swg sync.WaitGroup
-	swg.Add(1)
-	go func() {
-		defer swg.Done()
-		for i := 0; i < 5; i++ {
-			log.Println("server up")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
-			if err := s.Close(); err != nil {
-				log.Fatal(err)
-			}
-			log.Println("server down")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
-			s, err = net.Listen("tcp", addr.String())
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
+    // shut down and boot up the server randomly
+    var swg sync.WaitGroup
+    swg.Add(1)
+    go func() {
+        defer swg.Done()
+        for i := 0; i < 5; i++ {
+            log.Println("server up")
+            time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
+            if err := s.Close(); err != nil {
+                log.Fatal(err)
+            }
+            log.Println("server down")
+            time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
+            s, err = net.Listen("tcp", addr.String())
+            if err != nil {
+                log.Fatal(err)
+            }
+        }
+    }()
 
-	// client writes to the server and reconnects when it has to
-	// this is the interesting part
-	var cwg sync.WaitGroup
-	cwg.Add(1)
-	go func() {
-		defer cwg.Done()
-		for {
-			if _, err := c.Write([]byte("hello, world!")); err != nil {
-				switch e := err.(type) {
-				case gas.Error:
-					if e == gas.ErrMaxRetries {
-						log.Println("client leaving, reached retry limit")
-						return
-					}
-				default:
-					log.Fatal(err)
-				}
-			}
-			log.Println("client says hello!")
-		}
-	}()
+    // client writes to the server and reconnects when it has to
+    // this is the interesting part
+    var cwg sync.WaitGroup
+    cwg.Add(1)
+    go func() {
+        defer cwg.Done()
+        for {
+            if _, err := c.Write([]byte("hello, world!")); err != nil {
+                switch e := err.(type) {
+                case gas.Error:
+                    if e == gas.ErrMaxRetries {
+                        log.Println("client leaving, reached retry limit")
+                        return
+                    }
+                default:
+                    log.Fatal(err)
+                }
+            }
+            log.Println("client says hello!")
+        }
+    }()
 
-	// terminates the server indefinitely
-	swg.Wait()
-	if err := s.Close(); err != nil {
-		log.Fatal(err)
-	}
+    // terminates the server indefinitely
+    swg.Wait()
+    if err := s.Close(); err != nil {
+        log.Fatal(err)
+    }
 
-	// wait for the client to give up
-	cwg.Wait()
+    // wait for the client to give up
+    cwg.Wait()
 }
 ```
 
