@@ -74,6 +74,8 @@ import (
 )
 
 func main() {
+    rand.Seed(time.Now().UnixNano())
+
     // open a server socket
     s, err := net.Listen("tcp", "localhost:0")
     if err != nil {
