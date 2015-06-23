@@ -24,6 +24,9 @@ type TCPClient struct {
 	*net.TCPConn
 
 	lock sync.RWMutex
+
+	maxRetries    int
+	retryInterval time.Duration
 }
 
 // Dial returns a new net.Conn.
@@ -59,7 +62,29 @@ func DialTCP(network string, laddr, raddr *net.TCPAddr) (*TCPClient, error) {
 
 // ----------------------------------------------------------------------------
 
+// SetMaxRetries sets the retry limit for the TCPClient.
+//
+// This function completely Lock()s the TCPClient.
+func (c *TCPClient) SetMaxRetries(maxRetries int) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.maxRetries = maxTries
+}
+
+// GetMaxRetries gets the retry limit for the TCPClient.
+func (c *TCPClient) GetMaxRetries(maxRetries int) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	return c.maxRetries
+}
+
+// ----------------------------------------------------------------------------
+
 // reconnect builds a new TCP connection to replace the embedded *net.TCPConn.
+//
+// This function completely Lock()s the TCPClient.
 //
 // TODO: keep old socket configuration (timeout, linger...).
 func (c *TCPClient) reconnect() error {
