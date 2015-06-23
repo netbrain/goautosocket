@@ -47,4 +47,16 @@ func TestTCPClient_Dial(t *testing.T) {
 	if c == nil || c.(*TCPClient).TCPConn == nil {
 		t.Error("initialization failed")
 	}
+	c.Close()
+}
+
+func TestTCPClient_DialTCP(t *testing.T) {
+	c, err := DialTCP("tcp", nil, server.Addr().(*net.TCPAddr))
+	if err != nil {
+		t.Error(err)
+	}
+	if c == nil || c.TCPConn == nil {
+		t.Error("initialization failed")
+	}
+	c.Close()
 }
