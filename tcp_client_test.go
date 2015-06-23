@@ -183,3 +183,72 @@ func TestTCPClient_core(t *testing.T) {
 	// wait for clients to give up
 	cwg.Wait()
 }
+
+// ----------------------------------------------------------------------------
+
+func ExampleTCPClient() {
+	// open a server socket
+	s, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// save the original port
+	addr := s.Addr()
+
+	// connect a client to the server
+	c, err := Dial("tcp", s.Addr().String())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer c.Close()
+
+	// shut down and boot up the server randomly
+	var swg sync.WaitGroup
+	swg.Add(1)
+	go func() {
+		defer swg.Done()
+		for i := 0; i < 10; i++ {
+			log.Println("server up")
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			if err := s.Close(); err != nil {
+				log.Fatal(err)
+			}
+			log.Println("server down")
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			s, err = net.Listen("tcp", addr.String())
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+
+	// client writes to the server and reconnects when it has to
+	// this is the interesting part
+	var cwg sync.WaitGroup
+	cwg.Add(1)
+	go func() {
+		defer cwg.Done()
+		for {
+			if _, err := c.Write([]byte("hello, world!")); err != nil {
+				switch e := err.(type) {
+				case Error:
+					if e == ErrMaxRetries {
+						log.Println("client leaving, reached retry limit")
+						return
+					}
+				default:
+					log.Fatal(err)
+				}
+			}
+		}
+	}()
+
+	// terminates the server indefinitely
+	swg.Wait()
+	if err := s.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	// wait for the client to give up
+	cwg.Wait()
+}
