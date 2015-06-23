@@ -17,7 +17,7 @@ To test the library, you can run a local TCP server with:
 
 and run this code:
 
-package main
+    package main
 
     import (
         "log"
