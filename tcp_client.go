@@ -72,6 +72,7 @@ func (c *TCPClient) reconnect() error {
 		return err
 	}
 
+	c.TCPConn.Close()
 	c.TCPConn = conn
 	return nil
 }
