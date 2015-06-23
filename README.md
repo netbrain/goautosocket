@@ -1,4 +1,4 @@
-# GAS: Go Auto Socket
+# GoAutoSocket (GAS) [![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](http://godoc.org/github.com/teh-cmc/goautosocket) [![Build Status](http://img.shields.io/travis/teh-cmc/goautosocket.svg?style=flat-square)](https://travis-ci.org/teh-cmc/goautosocket)
 
 The GAS library provides auto-reconnecting TCP sockets in a tiny, fully tested, thread-safe API.
 
