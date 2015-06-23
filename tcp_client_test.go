@@ -47,7 +47,9 @@ func TestTCPClient_Dial(t *testing.T) {
 	if c == nil || c.(*TCPClient).TCPConn == nil {
 		t.Error("initialization failed")
 	}
-	c.Close()
+	if err := c.Close(); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestTCPClient_DialTCP(t *testing.T) {
@@ -58,5 +60,32 @@ func TestTCPClient_DialTCP(t *testing.T) {
 	if c == nil || c.TCPConn == nil {
 		t.Error("initialization failed")
 	}
-	c.Close()
+	if err := c.Close(); err != nil {
+		t.Error(err)
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+func TestTCPClient_reconnect(t *testing.T) {
+	c, _ := Dial("tcp", server.Addr().String())
+	defer c.Close()
+
+	tcpConn1 := c.(*TCPClient).TCPConn
+	if err := c.(*TCPClient).reconnect(); err != nil {
+		t.Error(err)
+	}
+	tcpConn2 := c.(*TCPClient).TCPConn
+	if tcpConn2 == nil || tcpConn1 == tcpConn2 {
+		t.Error("reconnection failed")
+	}
+
+	if err := tcpConn1.Close(); err == nil {
+		t.Error("tcpConn1 should already be closed")
+	} else if err.Error() != "use of closed network connection" {
+		t.Error(err)
+	}
+	if err := tcpConn2.Close(); err != nil {
+		t.Error(err)
+	}
 }
