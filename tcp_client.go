@@ -66,8 +66,8 @@ func (c *TCPClient) reconnect() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	laddr, raddr := c.TCPConn.LocalAddr(), c.TCPConn.RemoteAddr()
-	conn, err := net.DialTCP(raddr.Network(), laddr.(*net.TCPAddr), raddr.(*net.TCPAddr))
+	raddr := c.TCPConn.RemoteAddr()
+	conn, err := net.DialTCP(raddr.Network(), nil, raddr.(*net.TCPAddr))
 	if err != nil {
 		return err
 	}
