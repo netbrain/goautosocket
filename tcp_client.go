@@ -19,6 +19,9 @@ import (
 //
 // It embeds a *net.TCPConn and thus implements the net.Conn interface.
 //
+// Use the SetMaxRetries() and SetRetryInterval() methods to configure retry
+// values; otherwise they default to maxRetries=5 and retryInterval=100ms.
+//
 // TCPClient can be safely used from multiple goroutines.
 type TCPClient struct {
 	*net.TCPConn
@@ -57,7 +60,14 @@ func DialTCP(network string, laddr, raddr *net.TCPAddr) (*TCPClient, error) {
 		return nil, err
 	}
 
-	return &TCPClient{TCPConn: conn, lock: sync.RWMutex{}}, nil
+	return &TCPClient{
+		TCPConn: conn,
+
+		lock: sync.RWMutex{},
+
+		maxRetries:    5,
+		retryInterval: 100 * time.Millisecond,
+	}, nil
 }
 
 // ----------------------------------------------------------------------------
