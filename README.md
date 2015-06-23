@@ -153,4 +153,5 @@ Do not hesitate to send a pull request if this doesn't cover all your needs (and
 ## License ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=plastic)
 
 The MIT License (MIT) - see LICENSE for more details
+
 Copyright (c) 2015  Clement 'cmc' Rey  <cr.rey.clement@gmail.com>
