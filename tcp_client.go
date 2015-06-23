@@ -82,14 +82,14 @@ func (c *TCPClient) SetMaxRetries(maxRetries int) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.maxRetries = maxTries
+	c.maxRetries = maxRetries
 }
 
 // GetMaxRetries gets the retry limit for the TCPClient.
 //
 // Assuming i is the current retry iteration, the total sleep time is
 // t = retryInterval * (2^i)
-func (c *TCPClient) GetMaxRetries(maxRetries int) {
+func (c *TCPClient) GetMaxRetries() int {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -113,7 +113,7 @@ func (c *TCPClient) SetRetryInterval(retryInterval time.Duration) {
 //
 // Assuming i is the current retry iteration, the total sleep time is
 // t = retryInterval * (2^i)
-func (c *TCPClient) GetRetryInterval(retryInterval time.Duration) {
+func (c *TCPClient) GetRetryInterval() time.Duration {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
