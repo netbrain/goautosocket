@@ -148,11 +148,16 @@ You can also find an example with concurrency [here](https://github.com/teh-cmc/
 
 ## Disclaimer
 
-This was built with my needs in mind, no more, no less. That is, I needed a simple, tested and thread-safe API to talk concurrently, through a TCP socket, to some services of mine which might be rebooted at any time (and oftentimes against my will).
+This was built with my needs in mind, no more, no less. That is, I needed a simple, tested and thread-safe API to handle a situation in which I have:
+- on one end, a lot of goroutines concurrently writing to a TCP socket
+- on the other end, a TCP server that I have no control over (hence the main reason why UDP is out of the question) and which might be rebooted at anytime
+I also needed the ability to give up on sending a message after an abritrary amount of tries/time (i.e., ERR_MAX_TRIES). Pretty straightforward stuff.
 Basically, my use case is [this situation](https://github.com/teh-cmc/goautosocket/blob/master/tcp_client_test.go#L97).
 
-Surprisingly, I couldn't find such a library (I guess I either didn't look in the right place, or just not hard enough.. oh well); so here it is.
+Surprisingly, I couldn't find such a library (I guess I either didn't look in the right place, or just not hard enough..? oh well); so here it is.
 Do not hesitate to send a pull request if this doesn't cover all your needs (and it probably won't), they are more than welcome.
+
+If you're looking for some more insight, you might also want to look at [this discussion](http://redd.it/3aue82) we had on reddit.
 
 ## License ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=plastic)
 
