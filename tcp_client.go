@@ -201,7 +201,7 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 	return -1, ErrMaxRetries
 }
 
-// ReadFrom wraps net.TCPConn's Read method with reconnect capabilities.
+// ReadFrom wraps net.TCPConn's ReadFrom method with reconnect capabilities.
 //
 // It will return ErrMaxRetries if the retry limit is reached.
 func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
