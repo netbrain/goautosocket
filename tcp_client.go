@@ -65,8 +65,8 @@ func DialTCP(network string, laddr, raddr *net.TCPAddr) (*TCPClient, error) {
 
 		lock: sync.RWMutex{},
 
-		maxRetries:    5,
-		retryInterval: 100 * time.Millisecond,
+		maxRetries:    10,
+		retryInterval: 10 * time.Millisecond,
 	}, nil
 }
 
