@@ -224,35 +224,49 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	return -1, ErrMaxRetries
 }
 
-// Write wraps net.TCPConn's Read method with reconnect capabilities.
+// Write wraps net.TCPConn's Write method with reconnect capabilities.
 //
 // It will return ErrMaxRetries if the retry limit is reached.
 func (c *TCPClient) Write(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
+	disconnected := false
+
 	t := c.retryInterval
 	for i := 0; i < c.maxRetries; i++ {
+		if disconnected {
+			t *= 2
+			time.Sleep(t)
+			c.lock.RUnlock()
+			if err := c.reconnect(); err != nil {
+				switch e := err.(type) {
+				case *net.OpError:
+					if e.Err.(syscall.Errno) == syscall.ECONNREFUSED {
+						disconnected = true
+						c.lock.RLock()
+						continue
+					} else {
+						disconnected = false
+					}
+				}
+			}
+			c.lock.RLock()
+		}
 		n, err := c.TCPConn.Write(b)
 		if err == nil {
 			return n, err
 		}
 		switch e := err.(type) {
 		case *net.OpError:
-			if e.Err.(syscall.Errno) == syscall.EPIPE ||
-				e.Err.(syscall.Errno) == syscall.ECONNRESET {
-				c.lock.RUnlock()
-				if c.reconnect() != nil {
-					time.Sleep(t)
-				}
-				c.lock.RLock()
+			if e.Err.(syscall.Errno) == syscall.ECONNRESET {
+				disconnected = true
 			} else {
 				return n, err
 			}
 		default:
 			return n, err
 		}
-		t *= 2
 	}
 
 	return -1, ErrMaxRetries
