@@ -174,6 +174,87 @@ func TestTCPClient_Write(t *testing.T) {
 	cwg.Wait()
 }
 
+func TestTCPClient_Read(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipped (short mode)")
+	}
+
+	// open a server socket
+	s, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Error(err)
+	}
+	// save the original port
+	addr := s.Addr()
+
+	nbClients := 10
+	// connect nbClients clients to the server
+	clients := make([]net.Conn, nbClients)
+	for i := 0; i < len(clients); i++ {
+		c, err := Dial("tcp", s.Addr().String())
+		if err != nil {
+			t.Error(err)
+		}
+		c.(*TCPClient).SetMaxRetries(10)
+		c.(*TCPClient).SetRetryInterval(10 * time.Millisecond)
+		defer c.Close()
+		clients[i] = c
+	}
+
+	// shut down and boot up the server randomly
+	var swg sync.WaitGroup
+	swg.Add(1)
+	go func() {
+		defer swg.Done()
+		for i := 0; i < 5; i++ {
+			log.Println("server up")
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(30)))
+			if err := s.Close(); err != nil {
+				t.Error(err)
+			}
+			log.Println("server down")
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			s, err = net.Listen("tcp", addr.String())
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	}()
+
+	// clients concurrently reads from the server
+	var cwg sync.WaitGroup
+	for i, c := range clients {
+		cwg.Add(1)
+		go func(ii int, cc net.Conn) {
+			str := []byte("hello, world!")
+			b := make([]byte, len(str))
+			defer cwg.Done()
+			for {
+				if _, err := cc.Read(b); err != nil {
+					switch e := err.(type) {
+					case Error:
+						if e == ErrMaxRetries {
+							log.Println("client", ii, "leaving, reached retry limit while reading")
+							return
+						}
+					default:
+						t.Error(err)
+					}
+				}
+			}
+		}(i, c)
+	}
+
+	// terminates the server indefinitely
+	swg.Wait()
+	if err := s.Close(); err != nil {
+		t.Error(err)
+	}
+
+	// wait for clients to give up
+	cwg.Wait()
+}
+
 // ----------------------------------------------------------------------------
 
 func ExampleTCPClient() {
