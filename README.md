@@ -152,6 +152,7 @@ This was built with my needs in mind, no more, no less. That is, I needed a simp
 - on one end, a lot of goroutines concurrently writing to a TCP socket
 - on the other end, a TCP server that I have no control over (hence the main reason why UDP is out of the question) and which might be rebooted at anytime
 I also needed the ability to give up on sending a message after an abritrary amount of tries/time (i.e., ERR_MAX_TRIES). Pretty straightforward stuff.
+
 Basically, my use case is [this situation](https://github.com/teh-cmc/goautosocket/blob/master/tcp_client_test.go#L97).
 
 Surprisingly, I couldn't find such a library (I guess I either didn't look in the right place, or just not hard enough..? oh well); so here it is.
