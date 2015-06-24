@@ -7,7 +7,6 @@ package gas
 
 import (
 	"io"
-	"log"
 	"net"
 	"sync"
 	"syscall"
@@ -161,19 +160,19 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 			t *= 2
 			c.lock.RUnlock()
 			if err := c.reconnect(); err != nil {
-				log.Println(err)
 				switch e := err.(type) {
 				case *net.OpError:
 					if e.Err.(syscall.Errno) == syscall.ECONNREFUSED {
 						disconnected = true
 						c.lock.RLock()
 						continue
-					} else {
-						disconnected = false
 					}
+					return -1, err
 				default:
 					return -1, err
 				}
+			} else {
+				disconnected = false
 			}
 			c.lock.RLock()
 		}
@@ -224,12 +223,13 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 						disconnected = true
 						c.lock.RLock()
 						continue
-					} else {
-						disconnected = false
 					}
+					return -1, err
 				default:
 					return -1, err
 				}
+			} else {
+				disconnected = false
 			}
 			c.lock.RLock()
 		}
@@ -280,12 +280,13 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 						disconnected = true
 						c.lock.RLock()
 						continue
-					} else {
-						disconnected = false
 					}
+					return -1, err
 				default:
 					return -1, err
 				}
+			} else {
+				disconnected = false
 			}
 			c.lock.RLock()
 		}
