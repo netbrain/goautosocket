@@ -15,7 +15,7 @@ get -u github.com/teh-cmc/goautosocket
 
 To test the library, you can run a local TCP server with:
 
-    $ tcpserver -v -RHl0 127.0.0.1 9999 echo
+    $ ncat -l 9999 -k
 
 and run this code:
 
@@ -38,7 +38,7 @@ func main() {
 
     // client sends "hello, world!" to the server every second
     for {
-        _, err := conn.Write([]byte("hello, world!"))
+        _, err := conn.Write([]byte("hello, world!\n"))
         if err != nil {
             // if the client reached its retry limit, give up
             if err == gas.ErrMaxRetries {
@@ -118,7 +118,7 @@ func main() {
     go func() {
         defer cwg.Done()
         for {
-            if _, err := c.Write([]byte("hello, world!")); err != nil {
+            if _, err := c.Write([]byte("hello, world!\n")); err != nil {
                 switch e := err.(type) {
                 case gas.Error:
                     if e == gas.ErrMaxRetries {
