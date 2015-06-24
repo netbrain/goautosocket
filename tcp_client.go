@@ -183,7 +183,8 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 		}
 		switch e := err.(type) {
 		case *net.OpError:
-			if e.Err.(syscall.Errno) == syscall.ECONNRESET {
+			if e.Err.(syscall.Errno) == syscall.ECONNRESET ||
+				e.Err.(syscall.Errno) == syscall.EPIPE {
 				disconnected = true
 			} else {
 				return n, err
@@ -238,7 +239,8 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 		}
 		switch e := err.(type) {
 		case *net.OpError:
-			if e.Err.(syscall.Errno) == syscall.ECONNRESET {
+			if e.Err.(syscall.Errno) == syscall.ECONNRESET ||
+				e.Err.(syscall.Errno) == syscall.EPIPE {
 				disconnected = true
 			} else {
 				return n, err
@@ -293,7 +295,8 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 		}
 		switch e := err.(type) {
 		case *net.OpError:
-			if e.Err.(syscall.Errno) == syscall.ECONNRESET {
+			if e.Err.(syscall.Errno) == syscall.ECONNRESET ||
+				e.Err.(syscall.Errno) == syscall.EPIPE {
 				disconnected = true
 			} else {
 				return n, err
