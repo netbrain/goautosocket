@@ -128,12 +128,12 @@ func TestTCPClient_Write(t *testing.T) {
 		defer swg.Done()
 		for i := 0; i < 10; i++ {
 			log.Println("server up")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(30)))
 			if err := s.Close(); err != nil {
 				t.Error(err)
 			}
 			log.Println("server down")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
 			s, err = net.Listen("tcp", addr.String())
 			if err != nil {
 				t.Error(err)
@@ -141,20 +141,19 @@ func TestTCPClient_Write(t *testing.T) {
 		}
 	}()
 
-	// clients concurrently read and write to the server
+	// clients concurrently writes to the server
 	var cwg sync.WaitGroup
 	for i, c := range clients {
 		cwg.Add(1)
 		go func(ii int, cc net.Conn) {
 			str := []byte("hello, world!")
-			b := make([]byte, len(str))
 			defer cwg.Done()
 			for {
-				if _, err := cc.Read(b); err != nil {
+				if _, err := cc.Write(str); err != nil {
 					switch e := err.(type) {
 					case Error:
 						if e == ErrMaxRetries {
-							log.Println("client", ii, "leaving, reached retry limit while reading")
+							log.Println("client", ii, "leaving, reached retry limit while writing")
 							return
 						}
 					default:
