@@ -94,7 +94,7 @@ func TestTCPClient_reconnect(t *testing.T) {
 
 // ----------------------------------------------------------------------------
 
-func TestTCPClient_core(t *testing.T) {
+func TestTCPClient_Write(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipped (short mode)")
 	}
@@ -115,6 +115,8 @@ func TestTCPClient_core(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+		c.(*TCPClient).SetMaxRetries(10)
+		c.(*TCPClient).SetRetryInterval(10 * time.Millisecond)
 		defer c.Close()
 		clients[i] = c
 	}
@@ -126,12 +128,12 @@ func TestTCPClient_core(t *testing.T) {
 		defer swg.Done()
 		for i := 0; i < 10; i++ {
 			log.Println("server up")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
 			if err := s.Close(); err != nil {
 				t.Error(err)
 			}
 			log.Println("server down")
-			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(10)))
+			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(20)))
 			s, err = net.Listen("tcp", addr.String())
 			if err != nil {
 				t.Error(err)
@@ -148,17 +150,6 @@ func TestTCPClient_core(t *testing.T) {
 			b := make([]byte, len(str))
 			defer cwg.Done()
 			for {
-				if _, err := cc.Write(str); err != nil {
-					switch e := err.(type) {
-					case Error:
-						if e == ErrMaxRetries {
-							log.Println("client", ii, "leaving, reached retry limit while writing")
-							return
-						}
-					default:
-						t.Error(err)
-					}
-				}
 				if _, err := cc.Read(b); err != nil {
 					switch e := err.(type) {
 					case Error:
