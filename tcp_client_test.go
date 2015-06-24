@@ -195,7 +195,7 @@ func TestTCPClient_Read(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		c.(*TCPClient).SetMaxRetries(10)
+		c.(*TCPClient).SetMaxRetries(5)
 		c.(*TCPClient).SetRetryInterval(10 * time.Millisecond)
 		defer c.Close()
 		clients[i] = c
@@ -206,7 +206,7 @@ func TestTCPClient_Read(t *testing.T) {
 	swg.Add(1)
 	go func() {
 		defer swg.Done()
-		for i := 0; i < 5; i++ {
+		for i := 0; i < 10; i++ {
 			log.Println("server up")
 			time.Sleep(time.Millisecond * 100 * time.Duration(rand.Intn(30)))
 			if err := s.Close(); err != nil {

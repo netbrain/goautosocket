@@ -7,6 +7,7 @@ package gas
 
 import (
 	"io"
+	"log"
 	"net"
 	"sync"
 	"syscall"
@@ -151,29 +152,45 @@ func (c *TCPClient) Read(b []byte) (int, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
+	disconnected := false
+
 	t := c.retryInterval
 	for i := 0; i < c.maxRetries; i++ {
+		if disconnected {
+			time.Sleep(t)
+			t *= 2
+			c.lock.RUnlock()
+			if err := c.reconnect(); err != nil {
+				log.Println(err)
+				switch e := err.(type) {
+				case *net.OpError:
+					if e.Err.(syscall.Errno) == syscall.ECONNREFUSED {
+						disconnected = true
+						c.lock.RLock()
+						continue
+					} else {
+						disconnected = false
+					}
+				default:
+					return -1, err
+				}
+			}
+			c.lock.RLock()
+		}
 		n, err := c.TCPConn.Read(b)
 		if err == nil {
 			return n, err
 		}
 		switch e := err.(type) {
 		case *net.OpError:
-			if e.Err.(syscall.Errno) == syscall.EPIPE ||
-				e.Err.(syscall.Errno) == syscall.ECONNRESET {
-				c.lock.RUnlock()
-				if c.reconnect() != nil {
-					time.Sleep(t)
-				}
-				c.lock.RLock()
+			if e.Err.(syscall.Errno) == syscall.ECONNRESET {
+				disconnected = true
+			} else {
+				return n, err
 			}
 		default:
 			if err.Error() == "EOF" {
-				c.lock.RUnlock()
-				if c.reconnect() != nil {
-					time.Sleep(t)
-				}
-				c.lock.RLock()
+				disconnected = true
 			} else {
 				return n, err
 			}
@@ -191,29 +208,44 @@ func (c *TCPClient) ReadFrom(r io.Reader) (int64, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
+	disconnected := false
+
 	t := c.retryInterval
 	for i := 0; i < c.maxRetries; i++ {
+		if disconnected {
+			time.Sleep(t)
+			t *= 2
+			c.lock.RUnlock()
+			if err := c.reconnect(); err != nil {
+				switch e := err.(type) {
+				case *net.OpError:
+					if e.Err.(syscall.Errno) == syscall.ECONNREFUSED {
+						disconnected = true
+						c.lock.RLock()
+						continue
+					} else {
+						disconnected = false
+					}
+				default:
+					return -1, err
+				}
+			}
+			c.lock.RLock()
+		}
 		n, err := c.TCPConn.ReadFrom(r)
 		if err == nil {
 			return n, err
 		}
 		switch e := err.(type) {
 		case *net.OpError:
-			if e.Err.(syscall.Errno) == syscall.EPIPE ||
-				e.Err.(syscall.Errno) == syscall.ECONNRESET {
-				c.lock.RUnlock()
-				if c.reconnect() != nil {
-					time.Sleep(t)
-				}
-				c.lock.RLock()
+			if e.Err.(syscall.Errno) == syscall.ECONNRESET {
+				disconnected = true
+			} else {
+				return n, err
 			}
 		default:
 			if err.Error() == "EOF" {
-				c.lock.RUnlock()
-				if c.reconnect() != nil {
-					time.Sleep(t)
-				}
-				c.lock.RLock()
+				disconnected = true
 			} else {
 				return n, err
 			}
@@ -236,8 +268,8 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 	t := c.retryInterval
 	for i := 0; i < c.maxRetries; i++ {
 		if disconnected {
-			t *= 2
 			time.Sleep(t)
+			t *= 2
 			c.lock.RUnlock()
 			if err := c.reconnect(); err != nil {
 				switch e := err.(type) {
@@ -249,6 +281,8 @@ func (c *TCPClient) Write(b []byte) (int, error) {
 					} else {
 						disconnected = false
 					}
+				default:
+					return -1, err
 				}
 			}
 			c.lock.RLock()
