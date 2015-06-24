@@ -300,7 +300,7 @@ func ExampleTCPClient() {
 	go func() {
 		defer cwg.Done()
 		for {
-			if _, err := c.Write([]byte("hello, world!")); err != nil {
+			if _, err := c.Write([]byte("hello, world!\n")); err != nil {
 				switch e := err.(type) {
 				case Error:
 					if e == ErrMaxRetries {

@@ -15,7 +15,7 @@ replacing `net.Dial` with `gas.Dial` in your code.
 
 To test the library, you can run a local TCP server with:
 
-    $ tcpserver -v -RHl0 127.0.0.1 9999 echo
+    $ ncat -l 9999 -k
 
 and run this code:
 
@@ -37,7 +37,7 @@ and run this code:
 
         // client sends "hello, world!" to the server every second
         for {
-            _, err := conn.Write([]byte("hello, world!"))
+            _, err := conn.Write([]byte("hello, world!\n"))
             if err != nil {
                 // if the client reached its retry limit, give up
                 if err == gas.ErrMaxRetries {
