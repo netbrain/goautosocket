@@ -8,7 +8,7 @@ This means you should be able to use this library by just replacing `net.Dial` w
 ## Install
 
 ```bash
-get -u github.com/teh-cmc/goautosocket
+go get -u github.com/teh-cmc/goautosocket
 ```
 
 ## Usage
